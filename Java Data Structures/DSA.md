@@ -1,9 +1,5 @@
 # Java Data Structures for DSA — Quick Reference Cheatsheet
 
-A concise, high-yield cheat sheet of only the data structures you actually need for LeetCode / DSA in Java, along with their time complexities, common methods, and short usage examples.
-
----
-
 ## 1. Array (Primitive & Fixed-Size)
 Use when: Size is known in advance, fixed memory, 2D grids/matrices.
 
@@ -84,6 +80,58 @@ List<List<Integer>> adj = new ArrayList<>();
 for (int i = 0; i < n; i++) adj.add(new ArrayList<>());
 adj.get(u).add(v);                      // Add edge u -> v
 ```
+
+> [!NOTE]
+>
+> - `List` is an **interface** that defines the operations a list should support.
+> - `ArrayList` is a **class** that implements the `List` interface.
+>
+> ### 1. Using an Interface as the Reference Type
+>
+> ```java
+> List<Integer> numbers = new ArrayList<>();
+> ```
+>
+> **Advantages:**
+> - Provides abstraction by depending on an interface rather than a specific implementation.
+> - Makes it easier to switch implementations in the future.
+>
+> For example, to switch from `ArrayList` to `LinkedList`, you only need to change one line:
+>
+> ```java
+> List<Integer> numbers = new LinkedList<>();
+> ```
+>
+> The rest of your code can remain unchanged, provided it uses methods available through the `List` interface.
+>
+> ### 2. Using a Class as the Reference Type
+>
+> ```java
+> ArrayList<Integer> numbers = new ArrayList<>();
+> ```
+>
+> This is also valid Java. However, the reference is tied to the `ArrayList` class, so you cannot directly assign a `LinkedList` object to it.
+>
+> ```java
+> ArrayList<Integer> numbers = new ArrayList<>();
+>
+> numbers = new LinkedList<>(); // Compilation error
+> ```
+>
+> ### 3. Other Common Examples
+>
+> The same principle applies to other Java collections:
+>
+> ```java
+> List<Integer> list = new ArrayList<>();
+> Set<Integer> set = new HashSet<>();
+> Map<String, Integer> map = new HashMap<>();
+> Queue<Integer> queue = new LinkedList<>();
+> ```
+>
+> ### KEY TAKEAWAY
+>
+> **Prefer interface references when you want flexibility, but using an interface is not mandatory.** You can use a concrete class as the reference type whenever appropriate.
 
 ---
 
