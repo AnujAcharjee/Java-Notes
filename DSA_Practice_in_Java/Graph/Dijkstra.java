@@ -1,10 +1,12 @@
 package DSA_Practice_in_Java.Graph;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.PriorityQueue;
+import java.util.Queue;
 
 /*
  * =====================================================================================
@@ -179,6 +181,100 @@ public class Dijkstra {
         return result;
     }
 
+    /**
+     * Finds the shortest path in a binary matrix from source to destination.
+     * Moves are allowed in 8 directions (horizontal, vertical, diagonal).
+     * 0 represents an open/traversable cell, 1 represents an obstacle.
+     * 
+     * @param grid        2D binary matrix
+     * @param src         Source cell coordinates [row, col]
+     * @param destination Target destination cell coordinates [row, col]
+     * @return Shortest path length (number of visited cells), or -1 if unreachable
+     */
+    public static int shortestPathBinaryMatrix(int[][] grid, int[] src, int[] destination) {
+        if (grid == null || grid.length == 0 || grid[0].length == 0 ||
+                src == null || destination == null || src.length < 2 || destination.length < 2) {
+            return -1;
+        }
+
+        int rows = grid.length;
+        int cols = grid[0].length;
+
+        int srcRow = src[0];
+        int srcCol = src[1];
+        int destRow = destination[0];
+        int destCol = destination[1];
+
+        // Boundary checks for source and destination
+        if (srcRow < 0 || srcRow >= rows || srcCol < 0 || srcCol >= cols ||
+                destRow < 0 || destRow >= rows || destCol < 0 || destCol >= cols) {
+            return -1;
+        }
+
+        // Source or destination is blocked.
+        if (grid[srcRow][srcCol] == 1 || grid[destRow][destCol] == 1) {
+            return -1;
+        }
+
+        // If source is already destination
+        if (srcRow == destRow && srcCol == destCol) {
+            return 1;
+        }
+
+        Queue<int[]> queue = new ArrayDeque<>();
+        int[][] dist = new int[rows][cols];
+
+        for (int[] row : dist) {
+            Arrays.fill(row, -1);
+        }
+
+        dist[srcRow][srcCol] = 1;
+        queue.offer(new int[] { srcRow, srcCol });
+
+        int[] dRow = { 0, 0, 1, -1, 1, 1, -1, -1 };
+        int[] dCol = { 1, -1, 0, 0, -1, 1, -1, 1 };
+
+        while (!queue.isEmpty()) {
+            int[] state = queue.poll();
+
+            int row = state[0];
+            int col = state[1];
+
+            // Destination reached.
+            if (row == destRow && col == destCol) {
+                return dist[row][col];
+            }
+
+            for (int direction = 0; direction < 8; direction++) {
+                int nextRow = row + dRow[direction];
+                int nextCol = col + dCol[direction];
+
+                // Check boundaries.
+                if (nextRow < 0 || nextRow >= rows ||
+                        nextCol < 0 || nextCol >= cols) {
+                    continue;
+                }
+
+                // Skip blocked or visited cells.
+                if (grid[nextRow][nextCol] == 1 ||
+                        dist[nextRow][nextCol] != -1) {
+                    continue;
+                }
+
+                dist[nextRow][nextCol] = dist[row][col] + 1;
+
+                // Early exit if destination reached
+                if (nextRow == destRow && nextCol == destCol) {
+                    return dist[nextRow][nextCol];
+                }
+
+                queue.offer(new int[] { nextRow, nextCol });
+            }
+        }
+
+        return -1;
+    }
+
     public static void main(String[] args) {
         int V = 6;
         List<List<Pair>> adj = new ArrayList<>();
@@ -219,5 +315,16 @@ public class Dijkstra {
         System.out.println("\nShortest path from 0 to 5:");
         List<Integer> pathResult = findShortestPath(V, adj, 0, V - 1);
         System.out.println("Result (totalWeight, ...path): " + pathResult);
+
+        // 3. Shortest path in binary matrix using int[] coordinates
+        int[][] binaryGrid = {
+            { 0, 0, 0 },
+            { 1, 1, 0 },
+            { 1, 1, 0 }
+        };
+        int[] start = { 0, 0 };
+        int[] end = { 2, 2 };
+        int pathLen = shortestPathBinaryMatrix(binaryGrid, start, end);
+        System.out.println("\nShortest path in binary matrix from " + Arrays.toString(start) + " to " + Arrays.toString(end) + ": " + pathLen);
     }
 }
