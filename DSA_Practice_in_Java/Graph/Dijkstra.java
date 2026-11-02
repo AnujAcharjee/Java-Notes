@@ -4,6 +4,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
@@ -62,7 +63,8 @@ public class Dijkstra {
      * Finds shortest distances from source node to all other nodes.
      * 
      * @param V   Number of vertices (0 to V - 1)
-     * @param adj Adjacency list: adj.get(u) contains Pairs of (neighborNode, weight)
+     * @param adj Adjacency list: adj.get(u) contains Pairs of (neighborNode,
+     *            weight)
      * @param src Starting source vertex
      * @return int[] array where result[i] is shortest distance from src to i
      */
@@ -73,7 +75,7 @@ public class Dijkstra {
          * In DSA simple array is used for Pair and This is how min heap is implemented
          * 
          * PriorityQueue<long[]> minHeap = new PriorityQueue<>(
-         *      (a,b) -> Long.compare(a[0], b[0])
+         * (a,b) -> Long.compare(a[0], b[0])
          * );
          * 
          */
@@ -114,11 +116,14 @@ public class Dijkstra {
      * Reconstructs the shortest path from `src` to `dest`.
      * 
      * @param V    Number of vertices (0 to V - 1)
-     * @param adj  Adjacency list: adj.get(u) contains Pairs of (neighborNode, weight)
+     * @param adj  Adjacency list: adj.get(u) contains Pairs of (neighborNode,
+     *             weight)
      * @param src  Starting source vertex
      * @param dest Target destination vertex
-     * @return List where the first element is the total weight, followed by the nodes
-     *         on the path: [totalWeight, src, ..., dest]. Returns [-1] if unreachable.
+     * @return List where the first element is the total weight, followed by the
+     *         nodes
+     *         on the path: [totalWeight, src, ..., dest]. Returns [-1] if
+     *         unreachable.
      */
     public static List<Integer> findShortestPath(int V, List<List<Pair>> adj, int src, int dest) {
         PriorityQueue<Pair> minHeap = new PriorityQueue<>();
@@ -275,6 +280,137 @@ public class Dijkstra {
         return -1;
     }
 
+    /**
+     * Finds the minimum effort path from top-left (0,0) to bottom-right (rows-1,
+     * cols-1).
+     * Effort is defined as the maximum absolute difference in heights between two
+     * consecutive cells of the path.
+     * Uses Dijkstra's algorithm with a Min-Heap.
+     * 
+     * @param heights 2D grid representing heights
+     * @return Minimum effort required to travel from start to destination
+     */
+    public static int minimumEffortPath(int[][] heights) {
+        int rows = heights.length;
+        int cols = heights[0].length;
+
+        PriorityQueue<int[]> minHeap = new PriorityQueue<>(
+                (a, b) -> Integer.compare(a[0], b[0]));
+
+        int[][] diff = new int[rows][cols];
+        for (int[] row : diff) {
+            Arrays.fill(row, Integer.MAX_VALUE);
+        }
+
+        diff[0][0] = 0;
+        minHeap.offer(new int[] { 0, 0, 0 });
+
+        int[] dRow = { 0, 0, 1, -1 };
+        int[] dCol = { 1, -1, 0, 0 };
+
+        while (!minHeap.isEmpty()) {
+            int[] state = minHeap.poll();
+            int curDiff = state[0];
+            int curRow = state[1];
+            int curCol = state[2];
+
+            // Skip outdated heap entries.
+            if (curDiff > diff[curRow][curCol]) {
+                continue;
+            }
+
+            // Destination reached.
+            if (curRow == rows - 1 && curCol == cols - 1) {
+                return curDiff;
+            }
+
+            for (int i = 0; i < 4; i++) {
+                int newRow = curRow + dRow[i];
+                int newCol = curCol + dCol[i];
+
+                // Check boundaries.
+                if (newRow < 0 || newRow >= rows || newCol < 0 || newCol >= cols) {
+                    continue;
+                }
+
+                int edgeDiff = Math.abs(heights[newRow][newCol] - heights[curRow][curCol]);
+                int newDiff = Math.max(curDiff, edgeDiff);
+
+                // Relaxation.
+                if (newDiff < diff[newRow][newCol]) {
+                    diff[newRow][newCol] = newDiff;
+                    minHeap.offer(new int[] { newDiff, newRow, newCol });
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * Finds the number of ways to arrive at destination (node n - 1) from node 0
+     * in the shortest amount of time.
+     * 
+     * @param n     Number of intersections (nodes 0 to n - 1)
+     * @param roads 2D array [u, v, time] -> directed weighted graph
+     * @return Number of shortest paths modulo 10^9 + 7
+     */
+    public static int numberOfWaysToArriveAtDestination(int n, int[][] roads) {
+        int MOD = 1000000007;
+        List<List<int[]>> adj = new ArrayList<>();
+
+        for (int node = 0; node < n; node++) {
+            adj.add(new ArrayList<>());
+        }
+
+        for (int[] road : roads) {
+            int u = road[0];
+            int v = road[1];
+            int travelTime = road[2];
+            adj.get(u).add(new int[] { v, travelTime });
+            adj.get(v).add(new int[] { u, travelTime });
+        }
+
+        long INF = Long.MAX_VALUE / 4;
+        long[] dist = new long[n];
+        int[] ways = new int[n];
+        Arrays.fill(dist, INF);
+
+        PriorityQueue<long[]> minHeap = new PriorityQueue<>(
+                Comparator.<long[]>comparingLong(entry -> entry[0])
+                        .thenComparingLong(entry -> entry[1]));
+
+        dist[0] = 0;
+        ways[0] = 1;
+        minHeap.offer(new long[] { 0, 0 });
+
+        while (!minHeap.isEmpty()) {
+            long[] entry = minHeap.poll();
+            long currentDistance = entry[0];
+            int node = (int) entry[1];
+
+            if (currentDistance != dist[node]) {
+                continue;
+            }
+
+            for (int[] road : adj.get(node)) {
+                int neighbor = road[0];
+                int travelTime = road[1];
+                long candidate = currentDistance + travelTime;
+
+                if (candidate < dist[neighbor]) {
+                    dist[neighbor] = candidate;
+                    ways[neighbor] = ways[node];
+                    minHeap.offer(new long[] { candidate, neighbor });
+                } else if (candidate == dist[neighbor]) {
+                    ways[neighbor] = (int) (((long) ways[neighbor] + ways[node]) % MOD);
+                }
+            }
+        }
+
+        return ways[n - 1];
+    }
+
     public static void main(String[] args) {
         int V = 6;
         List<List<Pair>> adj = new ArrayList<>();
@@ -318,13 +454,40 @@ public class Dijkstra {
 
         // 3. Shortest path in binary matrix using int[] coordinates
         int[][] binaryGrid = {
-            { 0, 0, 0 },
-            { 1, 1, 0 },
-            { 1, 1, 0 }
+                { 0, 0, 0 },
+                { 1, 1, 0 },
+                { 1, 1, 0 }
         };
         int[] start = { 0, 0 };
         int[] end = { 2, 2 };
         int pathLen = shortestPathBinaryMatrix(binaryGrid, start, end);
-        System.out.println("\nShortest path in binary matrix from " + Arrays.toString(start) + " to " + Arrays.toString(end) + ": " + pathLen);
+        System.out.println("\nShortest path in binary matrix from " + Arrays.toString(start) + " to "
+                + Arrays.toString(end) + ": " + pathLen);
+
+        // 4. Path with Minimum Effort
+        int[][] heights = {
+                { 1, 2, 2 },
+                { 3, 8, 2 },
+                { 5, 3, 5 }
+        };
+        int effort = minimumEffortPath(heights);
+        System.out.println("\nPath with minimum effort: " + effort);
+
+        // 5. Number of Ways to Arrive at Destination
+        int n = 7;
+        int[][] roads = {
+                { 0, 6, 7 },
+                { 0, 1, 2 },
+                { 1, 2, 3 },
+                { 1, 3, 3 },
+                { 6, 3, 3 },
+                { 3, 5, 1 },
+                { 6, 5, 1 },
+                { 2, 5, 1 },
+                { 0, 4, 5 },
+                { 4, 6, 2 }
+        };
+        int ways = numberOfWaysToArriveAtDestination(n, roads);
+        System.out.println("\nNumber of ways to arrive at destination: " + ways);
     }
 }
