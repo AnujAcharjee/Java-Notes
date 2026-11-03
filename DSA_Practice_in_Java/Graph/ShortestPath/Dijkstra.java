@@ -1,42 +1,31 @@
-package DSA_Practice_in_Java.Graph;
+package DSA_Practice_in_Java.Graph.ShortestPath;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.Queue;
 
 /*
  * =====================================================================================
- * PROBLEM: Dijkstra's Algorithm (Single-Source Shortest Path & Path Reconstruction)
+ * ALGORITHM: Dijkstra's Algorithm (Single-Source Shortest Path)
  * =====================================================================================
  * 
- * Given:
- *   - A weighted, directed or undirected graph with V vertices (0 to V-1).
- *   - Non-negative edge weights.
- *   - A source vertex `src`.
+ * WHEN TO USE:
+ *   - Use Dijkstra when edges have DIFFERENT / NON-NEGATIVE weights.
+ *   - Uses a Greedy approach with a Min-Heap (PriorityQueue) to always process the 
+ *     vertex with the smallest accumulated distance.
+ *   - Cannot handle negative weight edges (use Bellman-Ford instead).
  * 
- * Goals:
- *   1. Find the shortest distance from `src` to all other vertices (`dijkstra`).
- *   2. Reconstruct and return the actual shortest path using a `parent[]` array
- *      (`findShortestPath`).
+ * RELAXATION:
+ *   if (dist[u] + weight < dist[v]) {
+ *       dist[v] = dist[u] + weight;
+ *       pq.offer(new Pair(v, dist[v]));
+ *   }
  * 
- * -------------------------------------------------------------------------------------
- * CORE CONCEPT:
- *   - Uses a Greedy approach + Min-Heap (PriorityQueue).
- *   - Distance to source = 0, all other distances = infinity (Integer.MAX_VALUE).
- *   - Relaxation condition:
- *       if (dist[u] + weight < dist[v]) {
- *           dist[v] = dist[u] + weight;
- *           parent[v] = u; // Track parent to reconstruct the path
- *           pq.offer(new Pair(v, dist[v]));
- *       }
- * 
- * Time Complexity:  O((V + E) * log V)
- * Space Complexity: O(V + E)
+ * TIME COMPLEXITY:  O((V + E) * log V)
+ * SPACE COMPLEXITY: O(V + E)
  * =====================================================================================
  */
 
@@ -52,7 +41,6 @@ public class Dijkstra {
             this.distance = distance;
         }
 
-        // Compare based on distance for Min-Heap (PriorityQueue)
         @Override
         public int compareTo(Pair other) {
             return Integer.compare(this.distance, other.distance);
@@ -60,30 +48,19 @@ public class Dijkstra {
     }
 
     /**
-     * Finds shortest distances from source node to all other nodes.
+     * Problem 1: Finds shortest distances from source node to all other nodes.
      * 
      * @param V   Number of vertices (0 to V - 1)
-     * @param adj Adjacency list: adj.get(u) contains Pairs of (neighborNode,
-     *            weight)
+     * @param adj Adjacency list: adj.get(u) contains Pairs of (neighborNode, weight)
      * @param src Starting source vertex
      * @return int[] array where result[i] is shortest distance from src to i
      */
     public static int[] dijkstra(int V, List<List<Pair>> adj, int src) {
         PriorityQueue<Pair> pq = new PriorityQueue<>();
 
-        /**
-         * In DSA simple array is used for Pair and This is how min heap is implemented
-         * 
-         * PriorityQueue<long[]> minHeap = new PriorityQueue<>(
-         * (a,b) -> Long.compare(a[0], b[0])
-         * );
-         * 
-         */
-
         int[] dist = new int[V];
         Arrays.fill(dist, Integer.MAX_VALUE);
 
-        // Distance from source to itself is 0: Pair(node, distance)
         dist[src] = 0;
         pq.offer(new Pair(src, 0));
 
@@ -96,7 +73,6 @@ public class Dijkstra {
             if (d > dist[n])
                 continue;
 
-            // Traverse adjacent vertices
             for (Pair x : adj.get(n)) {
                 int v = x.node;
                 int weight = x.distance;
@@ -113,17 +89,14 @@ public class Dijkstra {
     }
 
     /**
-     * Reconstructs the shortest path from `src` to `dest`.
+     * Problem 2: Reconstructs the shortest path from `src` to `dest`.
      * 
      * @param V    Number of vertices (0 to V - 1)
-     * @param adj  Adjacency list: adj.get(u) contains Pairs of (neighborNode,
-     *             weight)
+     * @param adj  Adjacency list: adj.get(u) contains Pairs of (neighborNode, weight)
      * @param src  Starting source vertex
      * @param dest Target destination vertex
-     * @return List where the first element is the total weight, followed by the
-     *         nodes
-     *         on the path: [totalWeight, src, ..., dest]. Returns [-1] if
-     *         unreachable.
+     * @return List where the first element is the total weight, followed by the nodes
+     *         on the path: [totalWeight, src, ..., dest]. Returns [-1] if unreachable.
      */
     public static List<Integer> findShortestPath(int V, List<List<Pair>> adj, int src, int dest) {
         PriorityQueue<Pair> minHeap = new PriorityQueue<>();
@@ -137,7 +110,6 @@ public class Dijkstra {
             parent[i] = i;
         }
 
-        // Distance from source to itself is 0
         dist[src] = 0;
         minHeap.offer(new Pair(src, 0));
 
@@ -176,10 +148,8 @@ public class Dijkstra {
         }
         path.add(src); // Add source node
 
-        // Reverse the path to get order: [src, ..., dest]
         Collections.reverse(path);
 
-        // Result format: first element is total weight, then the vertices
         List<Integer> result = new ArrayList<>();
         result.add(dist[dest]);
         result.addAll(path);
@@ -187,108 +157,11 @@ public class Dijkstra {
     }
 
     /**
-     * Finds the shortest path in a binary matrix from source to destination.
-     * Moves are allowed in 8 directions (horizontal, vertical, diagonal).
-     * 0 represents an open/traversable cell, 1 represents an obstacle.
-     * 
-     * @param grid        2D binary matrix
-     * @param src         Source cell coordinates [row, col]
-     * @param destination Target destination cell coordinates [row, col]
-     * @return Shortest path length (number of visited cells), or -1 if unreachable
-     */
-    public static int shortestPathBinaryMatrix(int[][] grid, int[] src, int[] destination) {
-        if (grid == null || grid.length == 0 || grid[0].length == 0 ||
-                src == null || destination == null || src.length < 2 || destination.length < 2) {
-            return -1;
-        }
-
-        int rows = grid.length;
-        int cols = grid[0].length;
-
-        int srcRow = src[0];
-        int srcCol = src[1];
-        int destRow = destination[0];
-        int destCol = destination[1];
-
-        // Boundary checks for source and destination
-        if (srcRow < 0 || srcRow >= rows || srcCol < 0 || srcCol >= cols ||
-                destRow < 0 || destRow >= rows || destCol < 0 || destCol >= cols) {
-            return -1;
-        }
-
-        // Source or destination is blocked.
-        if (grid[srcRow][srcCol] == 1 || grid[destRow][destCol] == 1) {
-            return -1;
-        }
-
-        // If source is already destination
-        if (srcRow == destRow && srcCol == destCol) {
-            return 1;
-        }
-
-        Queue<int[]> queue = new ArrayDeque<>();
-        int[][] dist = new int[rows][cols];
-
-        for (int[] row : dist) {
-            Arrays.fill(row, -1);
-        }
-
-        dist[srcRow][srcCol] = 1;
-        queue.offer(new int[] { srcRow, srcCol });
-
-        int[] dRow = { 0, 0, 1, -1, 1, 1, -1, -1 };
-        int[] dCol = { 1, -1, 0, 0, -1, 1, -1, 1 };
-
-        while (!queue.isEmpty()) {
-            int[] state = queue.poll();
-
-            int row = state[0];
-            int col = state[1];
-
-            // Destination reached.
-            if (row == destRow && col == destCol) {
-                return dist[row][col];
-            }
-
-            for (int direction = 0; direction < 8; direction++) {
-                int nextRow = row + dRow[direction];
-                int nextCol = col + dCol[direction];
-
-                // Check boundaries.
-                if (nextRow < 0 || nextRow >= rows ||
-                        nextCol < 0 || nextCol >= cols) {
-                    continue;
-                }
-
-                // Skip blocked or visited cells.
-                if (grid[nextRow][nextCol] == 1 ||
-                        dist[nextRow][nextCol] != -1) {
-                    continue;
-                }
-
-                dist[nextRow][nextCol] = dist[row][col] + 1;
-
-                // Early exit if destination reached
-                if (nextRow == destRow && nextCol == destCol) {
-                    return dist[nextRow][nextCol];
-                }
-
-                queue.offer(new int[] { nextRow, nextCol });
-            }
-        }
-
-        return -1;
-    }
-
-    /**
-     * Finds the minimum effort path from top-left (0,0) to bottom-right (rows-1,
-     * cols-1).
-     * Effort is defined as the maximum absolute difference in heights between two
-     * consecutive cells of the path.
-     * Uses Dijkstra's algorithm with a Min-Heap.
+     * Problem 3: Path with Minimum Effort (LeetCode 1631).
+     * Effort is the maximum absolute difference in heights between two consecutive cells.
      * 
      * @param heights 2D grid representing heights
-     * @return Minimum effort required to travel from start to destination
+     * @return Minimum effort required to travel from start (0, 0) to end (rows-1, cols-1)
      */
     public static int minimumEffortPath(int[][] heights) {
         int rows = heights.length;
@@ -314,12 +187,10 @@ public class Dijkstra {
             int curRow = state[1];
             int curCol = state[2];
 
-            // Skip outdated heap entries.
             if (curDiff > diff[curRow][curCol]) {
                 continue;
             }
 
-            // Destination reached.
             if (curRow == rows - 1 && curCol == cols - 1) {
                 return curDiff;
             }
@@ -328,7 +199,6 @@ public class Dijkstra {
                 int newRow = curRow + dRow[i];
                 int newCol = curCol + dCol[i];
 
-                // Check boundaries.
                 if (newRow < 0 || newRow >= rows || newCol < 0 || newCol >= cols) {
                     continue;
                 }
@@ -336,7 +206,6 @@ public class Dijkstra {
                 int edgeDiff = Math.abs(heights[newRow][newCol] - heights[curRow][curCol]);
                 int newDiff = Math.max(curDiff, edgeDiff);
 
-                // Relaxation.
                 if (newDiff < diff[newRow][newCol]) {
                     diff[newRow][newCol] = newDiff;
                     minHeap.offer(new int[] { newDiff, newRow, newCol });
@@ -348,15 +217,15 @@ public class Dijkstra {
     }
 
     /**
-     * Finds the number of ways to arrive at destination (node n - 1) from node 0
-     * in the shortest amount of time.
+     * Problem 4: Number of Ways to Arrive at Destination (LeetCode 1976).
+     * Counts shortest paths modulo 10^9 + 7.
      * 
      * @param n     Number of intersections (nodes 0 to n - 1)
-     * @param roads 2D array [u, v, time] -> directed weighted graph
+     * @param roads 2D array [u, v, time]
      * @return Number of shortest paths modulo 10^9 + 7
      */
     public static int numberOfWaysToArriveAtDestination(int n, int[][] roads) {
-        int MOD = 1000000007;
+        int MOD = 1000000007; // Prevents overflow as path counts grow exponentially
         List<List<int[]>> adj = new ArrayList<>();
 
         for (int node = 0; node < n; node++) {
@@ -371,11 +240,13 @@ public class Dijkstra {
             adj.get(v).add(new int[] { u, travelTime });
         }
 
+        // Divided by 4 so (INF + travelTime) never overflows Long.MAX_VALUE into negative numbers
         long INF = Long.MAX_VALUE / 4;
         long[] dist = new long[n];
         int[] ways = new int[n];
         Arrays.fill(dist, INF);
 
+        // Sorts primarily by distance (entry[0]); uses node ID (entry[1]) as tie-breaker
         PriorityQueue<long[]> minHeap = new PriorityQueue<>(
                 Comparator.<long[]>comparingLong(entry -> entry[0])
                         .thenComparingLong(entry -> entry[1]));
@@ -412,82 +283,41 @@ public class Dijkstra {
     }
 
     public static void main(String[] args) {
+        // 1. Single-source shortest path demo
         int V = 6;
         List<List<Pair>> adj = new ArrayList<>();
-        for (int i = 0; i < V; i++) {
-            adj.add(new ArrayList<>());
-        }
+        for (int i = 0; i < V; i++) adj.add(new ArrayList<>());
 
-        // Sample Weighted Graph:
-        // Edge (u, v, weight)
-        // 0 -> 1 (wt 4), 0 -> 2 (wt 4)
-        // 1 -> 2 (wt 2)
-        // 2 -> 3 (wt 3), 2 -> 4 (wt 1), 2 -> 5 (wt 6)
-        // 3 -> 5 (wt 2)
-        // 4 -> 5 (wt 3)
         adj.get(0).add(new Pair(1, 4));
         adj.get(0).add(new Pair(2, 4));
-
         adj.get(1).add(new Pair(2, 2));
-
         adj.get(2).add(new Pair(3, 3));
         adj.get(2).add(new Pair(4, 1));
         adj.get(2).add(new Pair(5, 6));
-
         adj.get(3).add(new Pair(5, 2));
-
         adj.get(4).add(new Pair(5, 3));
 
-        int src = 0;
+        int[] result = dijkstra(V, adj, 0);
+        System.out.println("Shortest distances from source node 0: " + Arrays.toString(result));
 
-        // 1. All-pairs shortest distances from src
-        int[] result = dijkstra(V, adj, src);
-        System.out.println("Shortest distances from source node " + src + ":");
-        for (int i = 0; i < V; i++) {
-            System.out.println("Node " + i + " : " + (result[i] == Integer.MAX_VALUE ? "INF" : result[i]));
-        }
-
-        // 2. Reconstructing shortest path from 0 to 5
-        System.out.println("\nShortest path from 0 to 5:");
+        // 2. Path reconstruction demo
         List<Integer> pathResult = findShortestPath(V, adj, 0, V - 1);
-        System.out.println("Result (totalWeight, ...path): " + pathResult);
+        System.out.println("Shortest path from 0 to 5: " + pathResult);
 
-        // 3. Shortest path in binary matrix using int[] coordinates
-        int[][] binaryGrid = {
-                { 0, 0, 0 },
-                { 1, 1, 0 },
-                { 1, 1, 0 }
-        };
-        int[] start = { 0, 0 };
-        int[] end = { 2, 2 };
-        int pathLen = shortestPathBinaryMatrix(binaryGrid, start, end);
-        System.out.println("\nShortest path in binary matrix from " + Arrays.toString(start) + " to "
-                + Arrays.toString(end) + ": " + pathLen);
-
-        // 4. Path with Minimum Effort
+        // 3. Minimum Effort Path demo
         int[][] heights = {
                 { 1, 2, 2 },
                 { 3, 8, 2 },
                 { 5, 3, 5 }
         };
-        int effort = minimumEffortPath(heights);
-        System.out.println("\nPath with minimum effort: " + effort);
+        System.out.println("Minimum Effort Path: " + minimumEffortPath(heights));
 
-        // 5. Number of Ways to Arrive at Destination
+        // 4. Number of Ways to Arrive at Destination demo
         int n = 7;
         int[][] roads = {
-                { 0, 6, 7 },
-                { 0, 1, 2 },
-                { 1, 2, 3 },
-                { 1, 3, 3 },
-                { 6, 3, 3 },
-                { 3, 5, 1 },
-                { 6, 5, 1 },
-                { 2, 5, 1 },
-                { 0, 4, 5 },
-                { 4, 6, 2 }
+                { 0, 6, 7 }, { 0, 1, 2 }, { 1, 2, 3 }, { 1, 3, 3 }, { 6, 3, 3 },
+                { 3, 5, 1 }, { 6, 5, 1 }, { 2, 5, 1 }, { 0, 4, 5 }, { 4, 6, 2 }
         };
-        int ways = numberOfWaysToArriveAtDestination(n, roads);
-        System.out.println("\nNumber of ways to arrive at destination: " + ways);
+        System.out.println("Number of Ways to Arrive at Destination: " + numberOfWaysToArriveAtDestination(n, roads));
     }
 }
